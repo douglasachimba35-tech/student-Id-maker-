@@ -1,0 +1,47 @@
+name: Build Student ID Maker APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'student_id_maker_project_for_cloud.zip'
+      - '.github/workflows/build-apk.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download project
+        uses: actions/checkout@v4
+
+      - name: Extract project
+        run: |
+          rm -rf app
+          unzip -q student_id_maker_project_for_cloud.zip
+          echo "Project extracted:"
+          find app -maxdepth 2 -type f
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create Android project
+        working-directory: app
+        run: flutter create --platforms=android --org com.studentidmaker .
+
+      - name: Install dependencies
+        working-directory: app
+        run: flutter pub get
+
+      - name: Build APK
+        working-directory: app
+        run: flutter build apk --release
+
+      - name: Save APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: student-id-maker-apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
